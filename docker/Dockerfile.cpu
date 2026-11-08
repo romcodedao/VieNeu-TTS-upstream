@@ -24,7 +24,8 @@ WORKDIR /workspace
 COPY --chown=app:app pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project --no-build
 # Pillow 13 fixes CVEs; gradio caps pillow<13 so uv.lock cannot move. This image serves apps.openai_speech, which never loads PIL.
-RUN uv pip install --no-deps --only-binary :all: pillow==13.0.0
+# Drop uv.lock: it still pins pillow 11.3.0, and image scanners read it as installed. Runtime is plain python, not uv run.
+RUN uv pip install --no-deps --only-binary :all: pillow==13.0.0 && rm -f uv.lock
 
 # Only what the Web UI needs.
 COPY --chown=app:app src/ src/
