@@ -22,10 +22,11 @@ WORKDIR /workspace
 # Dependencies only, wheels only (no setup.py execution), no project build: the app
 # runs straight from the source tree via PYTHONPATH.
 COPY --chown=app:app pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project --no-build
+# --no-cache: uv's cache would keep the replaced pillow 11.3.0 in the image, and scanners read it as installed.
+RUN uv sync --no-cache --frozen --no-dev --no-install-project --no-build
 # Pillow 13 fixes CVEs; gradio caps pillow<13 so uv.lock cannot move. This image serves apps.openai_speech, which never loads PIL.
-# Drop uv.lock: it still pins pillow 11.3.0, and image scanners read it as installed. Runtime is plain python, not uv run.
-RUN uv pip install --no-deps --only-binary :all: pillow==13.0.0 && rm -f uv.lock
+# Drop uv.lock too (it still pins pillow 11.3.0). Runtime is plain python, not uv run.
+RUN uv pip install --no-cache --no-deps --only-binary :all: pillow==13.0.0 && rm -f uv.lock
 
 # Only what the Web UI needs.
 COPY --chown=app:app src/ src/
